@@ -100,4 +100,4 @@ if st.button("Show Recommendation"):
 # FOOTER
 # -----------------------------
 st.markdown("---")
-st.caption("Developed by Yash Chhatbar | Data-Driven Career Decision System")
+st.caption("🎬 Developed by Yash Chhatbar | Movie Recommender System using Machine Learning")
