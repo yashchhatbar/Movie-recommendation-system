@@ -35,7 +35,7 @@ def recommend(movie):
 # Load Data
 movie_dict = pickle.load(open('Movie-Recommender-system/movie_dict.pkl','rb'))
 movies = pd.DataFrame(movie_dict)
-similarity = pickle.load(open('similarity.pkl','rb'))
+similarity = pickle.load(open('Movie-Recommender-system/similarity.pkl','rb'))
 
 # Streamlit UI
 st.title('Movie Recommender System')
@@ -55,3 +55,4 @@ if st.button('Show Recommendation'):
             st.text(names[i])
 
             st.image(posters[i])
+
