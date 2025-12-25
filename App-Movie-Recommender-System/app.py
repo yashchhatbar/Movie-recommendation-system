@@ -5,80 +5,93 @@ import pandas as pd
 import os
 
 # -----------------------------
-# BASE DIRECTORY (IMPORTANT)
+# PAGE CONFIG (FIRST LINE)
+# -----------------------------
+st.set_page_config(
+    page_title="Movie Recommender System",
+    layout="wide"
+)
+
+# -----------------------------
+# BASE DIRECTORY
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 MOVIE_DICT_PATH = os.path.join(BASE_DIR, "movie_dict.pkl")
 SIMILARITY_PATH = os.path.join(BASE_DIR, "similarity.pkl")
 
+TMDB_API_KEY = "df399de4718dd94d1fd24ecf1bfb230d"
+
 # -----------------------------
-# FUNCTIONS
+# CACHE MODEL & DATA (BIG SPEED BOOST)
 # -----------------------------
+@st.cache_resource
+def load_data():
+    movie_dict = pickle.load(open(MOVIE_DICT_PATH, "rb"))
+    movies = pd.DataFrame(movie_dict)
+    similarity = pickle.load(open(SIMILARITY_PATH, "rb"))
+    return movies, similarity
+
+
+movies, similarity = load_data()
+
+# -----------------------------
+# CACHE POSTERS (NO REPEAT API CALLS)
+# -----------------------------
+@st.cache_data(show_spinner=False)
 def fetch_poster(movie_id):
     try:
-        url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=df399de4718dd94d1fd24ecf1bfb230d&language=en-US"
+        url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&language=en-US"
         response = requests.get(url, timeout=5)
-        response.raise_for_status()
-
         data = response.json()
-        poster_path = data.get("poster_path")
 
-        if poster_path:
-            return "https://image.tmdb.org/t/p/w500/" + poster_path
-        else:
-            return "https://via.placeholder.com/500x750?text=No+Poster"
+        if data.get("poster_path"):
+            return "https://image.tmdb.org/t/p/w500/" + data["poster_path"]
+    except:
+        pass
 
-    except requests.exceptions.RequestException as e:
-        print("Request failed:", e)
-        return "https://via.placeholder.com/500x750?text=No+Poster"
+    return "https://via.placeholder.com/500x750?text=No+Poster"
 
 
+# -----------------------------
+# RECOMMENDATION LOGIC
+# -----------------------------
 def recommend(movie):
     movie_index = movies[movies["title"] == movie].index[0]
     distances = similarity[movie_index]
 
-    movies_list = sorted(
+    movie_list = sorted(
         list(enumerate(distances)),
         reverse=True,
         key=lambda x: x[1]
     )[1:6]
 
-    recommended_movies = []
-    recommended_movie_posters = []
+    names, posters = [], []
 
-    for i in movies_list:
+    for i in movie_list:
         movie_id = movies.iloc[i[0]].movie_id
-        recommended_movies.append(movies.iloc[i[0]].title)
-        recommended_movie_posters.append(fetch_poster(movie_id))
+        names.append(movies.iloc[i[0]].title)
+        posters.append(fetch_poster(movie_id))
 
-    return recommended_movies, recommended_movie_posters
+    return names, posters
 
-
-# -----------------------------
-# LOAD DATA (FIXED PATHS)
-# -----------------------------
-movie_dict = pickle.load(open(MOVIE_DICT_PATH, "rb"))
-movies = pd.DataFrame(movie_dict)
-
-similarity = pickle.load(open(SIMILARITY_PATH, "rb"))
 
 # -----------------------------
-# STREAMLIT UI
+# UI
 # -----------------------------
 st.title("🎬 Movie Recommender System")
 
-selected_movie_name = st.selectbox(
-    "Type or select a movie from the dropdown",
+selected_movie = st.selectbox(
+    "Type or select a movie",
     movies["title"].values
 )
 
 if st.button("Show Recommendation"):
-    names, posters = recommend(selected_movie_name)
+    with st.spinner("Finding best recommendations..."):
+        names, posters = recommend(selected_movie)
 
     cols = st.columns(5)
-
     for i in range(5):
         with cols[i]:
-            st.text(names[i])
             st.image(posters[i])
+            st.caption(names[i])
