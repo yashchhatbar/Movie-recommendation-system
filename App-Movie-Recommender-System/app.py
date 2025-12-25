@@ -33,7 +33,7 @@ def recommend(movie):
     return recommended_movies, recommended_movie_posters
 
 # Load Data
-movie_dict = pickle.load(open('movie_dict.pkl','rb'))
+movie_dict = pickle.load(open('Movie-Recommender-system/movie_dict.pkl','rb'))
 movies = pd.DataFrame(movie_dict)
 similarity = pickle.load(open('similarity.pkl','rb'))
 
@@ -53,4 +53,5 @@ if st.button('Show Recommendation'):
     for i in range(5):
         with columns[i]:
             st.text(names[i])
+
             st.image(posters[i])
