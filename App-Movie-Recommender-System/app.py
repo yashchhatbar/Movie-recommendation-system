@@ -95,3 +95,9 @@ if st.button("Show Recommendation"):
         with cols[i]:
             st.image(posters[i])
             st.caption(names[i])
+
+# -----------------------------
+# FOOTER
+# -----------------------------
+st.markdown("---")
+st.caption("Developed by Yash Chhatbar | Data-Driven Career Decision System")
